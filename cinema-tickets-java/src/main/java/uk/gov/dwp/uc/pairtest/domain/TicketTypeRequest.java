@@ -10,6 +10,7 @@ package uk.gov.dwp.uc.pairtest.domain;
  * - no setters or methods that modify state.
  * 
  * Updated Type to TicketType as more descriptive
+ * Updated so TicketType is a separate class - make it resusable 
  */
 
 public final class TicketTypeRequest {
@@ -42,9 +43,4 @@ public final class TicketTypeRequest {
     public TicketType getTicketType() {
         return ticketType;
     }
-
-    public enum TicketType {
-        ADULT, CHILD , INFANT
-    }
-
 }

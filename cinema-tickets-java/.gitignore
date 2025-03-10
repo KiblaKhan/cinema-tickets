@@ -1,1 +1,5 @@
+# Ignore target folder
 /target/
+
+# Ignore VS Code settings
+.vscode/settings.json
