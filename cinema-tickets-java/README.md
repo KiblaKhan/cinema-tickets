@@ -43,7 +43,7 @@ The project uses JUnit 5 and Mockito for unit testing. To run the unit tests, fo
 
 ### Run the unit tests
 
-- mvn clean install (first time you're building the project)  
+- mvn clean install (first time building the project)  
 - mvn test
 
 This will execute all the unit tests in the TicketServiceImplTest class.
@@ -87,7 +87,7 @@ Ticket Service completed.
 
 ## Dependencies
 
-The project uses the following dependencies:
+The project uses openjdk version 11.0.26 2025-01-21  and the following dependencies:
 
 - JUnit 5: For unit testing.
 
