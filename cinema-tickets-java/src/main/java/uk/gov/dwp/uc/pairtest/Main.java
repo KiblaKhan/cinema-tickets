@@ -44,22 +44,16 @@ public class Main {
 
             // Create TicketTypeRequest objects
             List<TicketTypeRequest> ticketRequests = new ArrayList<>();
-            if (adultTickets > 0) {
-                ticketRequests.add(new TicketTypeRequest(TicketType.ADULT, adultTickets));
-            }
-            if (childTickets > 0) {
-                ticketRequests.add(new TicketTypeRequest(TicketType.CHILD, childTickets));
-            }
-            if (infantTickets > 0) {
-                ticketRequests.add(new TicketTypeRequest(TicketType.INFANT, infantTickets));
-            }
+            ticketRequests.add(new TicketTypeRequest(TicketType.ADULT, adultTickets));
+            ticketRequests.add(new TicketTypeRequest(TicketType.CHILD, childTickets));
+            ticketRequests.add(new TicketTypeRequest(TicketType.INFANT, infantTickets));
 
             // Call the purchaseTickets method
             ticketService.purchaseTickets(accountId, ticketRequests.toArray(new TicketTypeRequest[0]));
 
             System.out.println("Purchase successful!");
-        } catch (InvalidPurchaseException e) {
-            System.err.println("Error: " + e.getMessage());
+        } catch (IllegalArgumentException | InvalidPurchaseException e) {
+            System.err.println("Error Invalid Purchase: " + e.getMessage());
         } finally {
             scanner.close();
         }
