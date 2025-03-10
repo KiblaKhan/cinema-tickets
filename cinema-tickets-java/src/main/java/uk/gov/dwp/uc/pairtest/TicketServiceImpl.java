@@ -20,59 +20,69 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
-    
+    public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests)
+            throws InvalidPurchaseException {
+
         validateAccountId(accountId);
 
         validateTicketRequests(ticketTypeRequests);
 
+        // Calculate totals
+        TicketTotals totals = calculateTotals(ticketTypeRequests);
+
+        validateTicketPurchaseLimits(totals.totalTickets);
+
+        validateAdultPresence(totals.adultTickets, totals.childTickets, totals.infantTickets);
+
+        validateInfantToAdultRatio(totals.adultTickets, totals.infantTickets);
+
+        logPurchaseDetails(accountId, totals.totalTickets, totals.totalAmount, totals.totalSeats,
+                totals.adultTickets, totals.childTickets, totals.infantTickets);
+
+        // If all validations pass, proceed with the purchase
+        // Make payment request
+        paymentService.makePayment(accountId, totals.totalAmount);
+
+        // Make seat reservation request
+        reservationService.reserveSeat(accountId, totals.totalSeats);
+
+        System.out.println("Ticket Service completed:");
+    }
+
+    private static class TicketTotals {
         int totalTickets = 0;
         int totalAmount = 0;
         int totalSeats = 0;
         int adultTickets = 0;
         int childTickets = 0;
         int infantTickets = 0;
+    }
 
-        // Calculate totals
+    private TicketTotals calculateTotals(TicketTypeRequest... ticketTypeRequests) {
+        TicketTotals totals = new TicketTotals();
+
         for (TicketTypeRequest request : ticketTypeRequests) {
-            totalTickets += request.getNoOfTickets();
+            int tickets = request.getNoOfTickets();
+            totals.totalTickets += tickets;
 
             switch (request.getTicketType()) {
                 case ADULT:
-                    adultTickets += request.getNoOfTickets();
-                    totalAmount += request.getNoOfTickets() * TicketType.ADULT.getPrice();
-                    totalSeats += request.getNoOfTickets();
+                    totals.adultTickets += tickets;
+                    totals.totalAmount += tickets * TicketType.ADULT.getPrice();
+                    totals.totalSeats += tickets;
                     break;
                 case CHILD:
-                    childTickets += request.getNoOfTickets();
-                    totalAmount += request.getNoOfTickets() * TicketType.CHILD.getPrice();
-                    totalSeats += request.getNoOfTickets();
+                    totals.childTickets += tickets;
+                    totals.totalAmount += tickets * TicketType.CHILD.getPrice();
+                    totals.totalSeats += tickets;
                     break;
                 case INFANT:
-                    infantTickets += request.getNoOfTickets();
+                    totals.infantTickets += tickets;
                     // Infants do not pay or occupy a seat
                     break;
             }
         }
-
-        validateTotalNumberOfTickets(totalTickets);
-
-        validateAdultPresence(adultTickets, childTickets, infantTickets);
-
-        validateInfantToAdultRatio(adultTickets, infantTickets);
-
-        validateAtLeastOneTicketPurchased(totalTickets);
-
-        logPurchaseDetails(accountId, totalTickets, totalAmount, totalSeats, adultTickets, childTickets, infantTickets);
-        
-        // If all validations pass, proceed with the purchase
-        // Make payment request
-        paymentService.makePayment(accountId, totalAmount);
-
-        // Make seat reservation request
-        reservationService.reserveSeat(accountId, totalSeats);
-        
-        System.out.println("Ticket Service completed:");
+        return totals;
     }
 
     private void validateAccountId(Long accountId) throws InvalidPurchaseException {
@@ -87,34 +97,33 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    private void validateTotalNumberOfTickets(int totalTickets) throws InvalidPurchaseException {
+    private void validateTicketPurchaseLimits(int totalTickets) throws InvalidPurchaseException {
+        if (totalTickets == 0) {
+            throw new InvalidPurchaseException("At least one ticket must be purchased");
+        }
         if (totalTickets > MAX_TICKETS_PER_PURCHASE) {
             throw new InvalidPurchaseException("Maximum of " + MAX_TICKETS_PER_PURCHASE + " tickets per purchase");
         }
     }
 
-    private void validateAdultPresence(int adultTickets, int childTickets, int infantTickets) throws InvalidPurchaseException {
-        //Ensure at least one adult ticket is purchased with child/infant tickets
+    private void validateAdultPresence(int adultTickets, int childTickets, int infantTickets)
+            throws InvalidPurchaseException {
+        // Ensure at least one adult ticket is purchased with child/infant tickets
         if (adultTickets == 0 && (childTickets > 0 || infantTickets > 0)) {
             throw new InvalidPurchaseException("Child or Infant tickets cannot be purchased without an Adult ticket");
         }
     }
 
     private void validateInfantToAdultRatio(int adultTickets, int infantTickets) throws InvalidPurchaseException {
-        //Every infant must be accompanied by an adult - as they are seated on adults lap
+        // Every infant must be accompanied by an adult - as they are seated on adults
+        // lap
         if (infantTickets > adultTickets) {
             throw new InvalidPurchaseException("Each infant must be accompanied by an adult");
         }
     }
 
-    private void validateAtLeastOneTicketPurchased(int totalTickets) throws InvalidPurchaseException {
-        if (totalTickets == 0) {
-            throw new InvalidPurchaseException("At least one ticket must be purchased");
-        }
-    }
-
     private void logPurchaseDetails(Long accountId, int totalTickets, int totalAmount, int totalSeats,
-                                    int adultTickets, int childTickets, int infantTickets) {
+            int adultTickets, int childTickets, int infantTickets) {
         System.out.println("\nPayment processed: Account ID = " + accountId);
         System.out.println("Total number of tickets: " + totalTickets);
         System.out.println("Total amount to pay: " + totalAmount);
