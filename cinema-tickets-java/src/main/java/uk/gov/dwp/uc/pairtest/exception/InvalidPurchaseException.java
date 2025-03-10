@@ -1,8 +1,9 @@
 package uk.gov.dwp.uc.pairtest.exception;
 
 /**
- * Improvements to InvalidPurchaseException:
+ * Custom unchecked exception to indicate invalid ticket purchase requests.
  * 
+ * Improvements to InvalidPurchaseException:
  * - accept custom error message - makes debugging easier
  * - accept custom error message and a cause for exception chaining - useful for debugging and logging
  */
