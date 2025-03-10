@@ -22,15 +22,15 @@ public final class TicketTypeRequest {
      * Constructs a new TicketTypeRequest.
      *
      * @param ticketType  the type of ticket (must not be null)
-     * @param noOfTickets the number of tickets requested (must be greater than zero)
+     * @param noOfTickets the number of tickets requested (must not be negative)
      * @throws IllegalArgumentException if ticketType is null or noOfTickets is negative
      */
     public TicketTypeRequest(TicketType ticketType, int noOfTickets) {
         if(ticketType == null) {
             throw new IllegalArgumentException("Ticket type cannot be null");
         }
-        if (noOfTickets <= 0) { // Updated condition to disallow zero or negative tickets
-            throw new IllegalArgumentException("Number of tickets must be greater than zero");
+        if (noOfTickets < 0) { 
+            throw new IllegalArgumentException("Number of tickets must not be negative");
         }
         this.ticketType = ticketType;
         this.noOfTickets = noOfTickets;

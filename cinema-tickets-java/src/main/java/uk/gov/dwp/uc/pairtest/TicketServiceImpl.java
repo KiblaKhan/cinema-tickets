@@ -21,15 +21,10 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
-        // Validate account ID
-        if (accountId == null || accountId <= 0) {
-            throw new InvalidPurchaseException("Invalid account ID");
-        }
+    
+        validateAccountId(accountId);
 
-        // Validate ticket requests
-        if (ticketTypeRequests == null || ticketTypeRequests.length == 0) {
-            throw new InvalidPurchaseException("No ticket requests provided");
-        }
+        validateTicketRequests(ticketTypeRequests);
 
         int totalTickets = 0;
         int totalAmount = 0;
@@ -60,28 +55,15 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        // Validate total tickets
-        if (totalTickets > MAX_TICKETS_PER_PURCHASE) {
-            throw new InvalidPurchaseException("Maximum of " + MAX_TICKETS_PER_PURCHASE + " tickets per purchase");
-        }
+        validateTotalNumberOfTickets(totalTickets);
 
-        // Validate adult presence
-        if (adultTickets == 0 && (childTickets > 0 || infantTickets > 0)) {
-            throw new InvalidPurchaseException("Child or Infant tickets cannot be purchased without an Adult ticket");
-        }
+        validateAdultPresence(adultTickets, childTickets, infantTickets);
 
-        // Validate infant to adult ratio
-        if (infantTickets > adultTickets) {
-            throw new InvalidPurchaseException("Each infant must be accompanied by an adult");
-        }
+        validateInfantToAdultRatio(adultTickets, infantTickets);
 
-        // Validate zero tickets
-        if (totalTickets == 0) {
-            throw new InvalidPurchaseException("At least one ticket must be purchased");
-        }
+        validateAtLeastOneTicketPurchased(totalTickets);
 
-        System.out.println("Total amount to pay: " + totalAmount);
-        System.out.println("Total seats to reserve: " + totalSeats);
+        logPurchaseDetails(accountId, totalTickets, totalAmount, totalSeats, adultTickets, childTickets, infantTickets);
         
         // If all validations pass, proceed with the purchase
         // Make payment request
@@ -90,6 +72,56 @@ public class TicketServiceImpl implements TicketService {
         // Make seat reservation request
         reservationService.reserveSeat(accountId, totalSeats);
         
-        System.out.println("Purchase successful:");
+        System.out.println("Ticket Service completed:");
+    }
+
+    private void validateAccountId(Long accountId) throws InvalidPurchaseException {
+        if (accountId == null || accountId <= 0) {
+            throw new InvalidPurchaseException("Invalid account ID");
+        }
+    }
+
+    private void validateTicketRequests(TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
+        if (ticketTypeRequests == null || ticketTypeRequests.length == 0) {
+            throw new InvalidPurchaseException("No ticket requests provided");
+        }
+    }
+
+    private void validateTotalNumberOfTickets(int totalTickets) throws InvalidPurchaseException {
+        if (totalTickets > MAX_TICKETS_PER_PURCHASE) {
+            throw new InvalidPurchaseException("Maximum of " + MAX_TICKETS_PER_PURCHASE + " tickets per purchase");
+        }
+    }
+
+    private void validateAdultPresence(int adultTickets, int childTickets, int infantTickets) throws InvalidPurchaseException {
+        //Ensure at least one adult ticket is purchased with child/infant tickets
+        if (adultTickets == 0 && (childTickets > 0 || infantTickets > 0)) {
+            throw new InvalidPurchaseException("Child or Infant tickets cannot be purchased without an Adult ticket");
+        }
+    }
+
+    private void validateInfantToAdultRatio(int adultTickets, int infantTickets) throws InvalidPurchaseException {
+        //Every infant must be accompanied by an adult - as they are seated on adults lap
+        if (infantTickets > adultTickets) {
+            throw new InvalidPurchaseException("Each infant must be accompanied by an adult");
+        }
+    }
+
+    private void validateAtLeastOneTicketPurchased(int totalTickets) throws InvalidPurchaseException {
+        if (totalTickets == 0) {
+            throw new InvalidPurchaseException("At least one ticket must be purchased");
+        }
+    }
+
+    private void logPurchaseDetails(Long accountId, int totalTickets, int totalAmount, int totalSeats,
+                                    int adultTickets, int childTickets, int infantTickets) {
+        System.out.println("\nPayment processed: Account ID = " + accountId);
+        System.out.println("Total number of tickets: " + totalTickets);
+        System.out.println("Total amount to pay: " + totalAmount);
+        System.out.println("Total seats to reserve: " + totalSeats);
+        System.out.println("Tickets comprise of: ");
+        System.out.println("   Adult Tickets: " + adultTickets);
+        System.out.println("   Child Tickets: " + childTickets);
+        System.out.println("   Infant Tickets: " + infantTickets);
     }
 }

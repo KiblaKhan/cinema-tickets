@@ -24,13 +24,20 @@ class TicketTypeRequestTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -1, -10, -100})
-    void testZeroOrNegativeNoOfTicketsThrowsException(int invalidNoOfTickets) {
+    @ValueSource(ints = {-1, -10, -100})
+    void testNegativeNoOfTicketsThrowsException(int invalidNoOfTickets) {
         // Using 'var' for local variable type inference (Java 11+)
         var exception = assertThrows(IllegalArgumentException.class, () -> {
             new TicketTypeRequest(TicketType.CHILD, invalidNoOfTickets);
         });
-        assertEquals("Number of tickets must be greater than zero", exception.getMessage(), "Exception message should match");
+        assertEquals("Number of tickets must not be negative", exception.getMessage(), "Exception message should match");
+    }
+
+    @Test
+    void testZeroNoOfTicketsIsValid() {
+        // Test zero number of tickets (edge case)
+        TicketTypeRequest request = new TicketTypeRequest(TicketType.INFANT, 0);
+        assertEquals(0, request.getNoOfTickets(), "Number of tickets should be 0");
     }
 
     @Test
