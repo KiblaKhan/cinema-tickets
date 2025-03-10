@@ -80,6 +80,7 @@ class TicketServiceImplTest {
             ticketService.purchaseTickets(1L, childRequest);
         });
 
+        // Verify that the payment and reservation services are never called
         verify(paymentService, never()).makePayment(Mockito.anyLong(), Mockito.anyInt());
         verify(reservationService, never()).reserveSeat(Mockito.anyLong(), Mockito.anyInt());
     }
@@ -108,18 +109,15 @@ class TicketServiceImplTest {
         verify(reservationService, never()).reserveSeat(Mockito.anyLong(), Mockito.anyInt());
     }
 
-    // @Test
+    @Test
     void testInvalidPurchase_ZeroTickets() {
-        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 0);
-
-        InvalidPurchaseException exception = assertThrows(InvalidPurchaseException.class, () -> {
-            ticketService.purchaseTickets(1L, adultRequest);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            new TicketTypeRequest(TicketType.ADULT, 0);
         });
 
         // Verify the exception message
         assertEquals("Number of tickets must be greater than zero", exception.getMessage());
 
-        // Verify that the payment and reservation services are not called
         verify(paymentService, never()).makePayment(Mockito.anyLong(), Mockito.anyInt());
         verify(reservationService, never()).reserveSeat(Mockito.anyLong(), Mockito.anyInt());
     }
@@ -179,5 +177,72 @@ class TicketServiceImplTest {
 
         verify(paymentService, never()).makePayment(Mockito.anyLong(), Mockito.anyInt());
         verify(reservationService, never()).reserveSeat(Mockito.anyLong(), Mockito.anyInt());
+    }
+
+    // Additional tests for price and seat allocation correctness
+    @Test
+    void testPriceCalculation_OnlyAdults() throws InvalidPurchaseException {
+        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 4);
+
+        ticketService.purchaseTickets(1L, adultRequest);
+
+        verify(paymentService).makePayment(1L, 100); // 4 adults * £25 = £100
+        verify(reservationService).reserveSeat(1L, 4); // 4 adults = 4 seats
+    }
+
+    @Test
+    void testPriceCalculation_AdultsAndChildren() throws InvalidPurchaseException {
+        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 2);
+        TicketTypeRequest childRequest = new TicketTypeRequest(TicketType.CHILD, 3);
+
+        ticketService.purchaseTickets(1L, adultRequest, childRequest);
+
+        verify(paymentService).makePayment(1L, 95); // (2 adults * £25) + (3 children * £15) = £95
+        verify(reservationService).reserveSeat(1L, 5); // 2 adults + 3 children = 5 seats
+    }
+
+    @Test
+    void testPriceCalculation_AdultsChildrenAndInfants() throws InvalidPurchaseException {
+        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 2);
+        TicketTypeRequest childRequest = new TicketTypeRequest(TicketType.CHILD, 1);
+        TicketTypeRequest infantRequest = new TicketTypeRequest(TicketType.INFANT, 1);
+
+        ticketService.purchaseTickets(1L, adultRequest, childRequest, infantRequest);
+
+        verify(paymentService).makePayment(1L, 65); // (2 adults * £25) + (1 child * £15) + (1 infant * £0) = £65
+        verify(reservationService).reserveSeat(1L, 3); // 2 adults + 1 child = 3 seats
+    }
+
+    @Test
+    void testPriceCalculation_OnlyInfantsWithAdults() throws InvalidPurchaseException {
+        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 2);
+        TicketTypeRequest infantRequest = new TicketTypeRequest(TicketType.INFANT, 2);
+
+        ticketService.purchaseTickets(1L, adultRequest, infantRequest);
+
+        verify(paymentService).makePayment(1L, 50); // (2 adults * £25) + (2 infants * £0) = £50
+        verify(reservationService).reserveSeat(1L, 2); // 2 adults = 2 seats
+    }
+
+    @Test
+    void testSeatAllocation_OnlyChildrenWithAdults() throws InvalidPurchaseException {
+        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 1);
+        TicketTypeRequest childRequest = new TicketTypeRequest(TicketType.CHILD, 3);
+
+        ticketService.purchaseTickets(1L, adultRequest, childRequest);
+
+        verify(paymentService).makePayment(1L, 70); // (1 adult * £25) + (3 children * £15) = £70
+        verify(reservationService).reserveSeat(1L, 4); // 1 adult + 3 children = 4 seats
+    }
+
+    @Test
+    void testSeatAllocation_InfantsDoNotGetSeats() throws InvalidPurchaseException {
+        TicketTypeRequest adultRequest = new TicketTypeRequest(TicketType.ADULT, 2);
+        TicketTypeRequest infantRequest = new TicketTypeRequest(TicketType.INFANT, 2);
+
+        ticketService.purchaseTickets(1L, adultRequest, infantRequest);
+
+        verify(paymentService).makePayment(1L, 50); // (2 adults * £25) + (2 infants * £0) = £50
+        verify(reservationService).reserveSeat(1L, 2); // 2 adults = 2 seats
     }
 }
