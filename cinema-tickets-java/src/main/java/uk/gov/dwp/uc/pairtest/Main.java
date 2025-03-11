@@ -1,9 +1,5 @@
 package uk.gov.dwp.uc.pairtest;
 
-import uk.gov.dwp.uc.pairtest.domain.TicketType;
-import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
-import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -12,6 +8,9 @@ import thirdparty.paymentgateway.TicketPaymentService;
 import thirdparty.paymentgateway.TicketPaymentServiceImpl;
 import thirdparty.seatbooking.SeatReservationService;
 import thirdparty.seatbooking.SeatReservationServiceImpl;
+import uk.gov.dwp.uc.pairtest.domain.TicketType;
+import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
+import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
 public class Main {
     public static void main(String[] args) {
